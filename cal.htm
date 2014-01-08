@@ -1,0 +1,1070 @@
+<html>
+<head>
+<meta http-equiv="Content-Language" content="zh-cn">
+<meta http-equiv="Content-Type" content="text/html; charset=gb2312">
+<title>三千年传统年历</title>
+<style>
+a {color: rgb(0,0,150) ; Text-decoration:none  ; font-weight : none}
+a:hover {color: rgb(250,40,40);text-decoration:underline; font-weight : none}
+a:visited {color: rgb(80,0,80)}
+</style>
+</head>
+
+<script src="ccc0.1/ccc.js"></script>
+
+<script>
+/*****************************************************
+  如要转载或引用，敬请保留这段信息，谢谢！
+
+
+    三千年传统年历 v0.1
+
+    作者：neweroica 2003-5
+
+    版权所有 (C) 2002-2003 neweroica 
+
+    联系方式： Email:  wy25@mail.bnu.edu.cn
+
+               QQ: 32460746
+ 
+    献给elove的可爱的朋友们~~~ :)
+
+*****************************************************/
+
+function css(border_left,border_top,border_right,border_bottom,backgroundColor){
+
+  this.borderLeft=border_left;
+  this.borderTop=border_top;
+  this.borderRight=border_right;
+  this.borderBottom=border_bottom;
+  this.backgroundColor=backgroundColor;
+
+  this.style='border-left:'+this.borderLeft
+            +';border-top:'+this.borderTop
+            +';border-right:'+this.borderRight
+            +';border-bottom:'+this.borderBottom
+            +';background-color:'+this.backgroundColor;
+}
+
+//风格
+
+var releasedGridStyle=new css(
+                               'outset 1px #ECE9D8',                    //border_left
+                               'outset 1px #ECE9D8',                    //border_top
+                               'solid 1px #ECE9D8',                    //border_right
+                               'solid 1px #ECE9D8',                    //border_bottom
+                               '#ECE9D8'                                //background-color
+                              );
+var pressedGridStyle=new css(
+                               'inset 1px #000000',                     //border_left
+                               'inset 1px #000000',                     //border_top
+                               'solid 1px #ECE9D8',                     //border_right
+                               'solid 1px #ECE9D8',                     //border_bottom
+                               '#ACA899'                                //background-color
+                              );
+
+
+var overGridStyle=new css(
+                               'double 1px #316AC5',                     //border_left
+                               'double 1px #316AC5',                     //border_top
+                               'double 1px #316AC5',                     //border_right
+                               'double 1px #316AC5',                     //border_bottom
+                               '#C1D2EE'                                 //background-color
+                              );
+
+var outGridStyle=releasedGridStyle;
+
+var backArrowStyle=new css(
+                               'solid 1px #ECE9D8',                    //border_left
+                               'outset 1px #ECE9D8',                    //border_top
+                               'solid 1px #ECE9D8',                    //border_right
+                               'solid 1px #ECE9D8',                    //border_bottom
+                               '#ECE9D8'                                //background-color
+                              );
+
+var forwardArrowStyle=backArrowStyle;
+
+var yearBarStyle=new css(
+                               'solid 1px #ECE9D8',                    //border_left
+                               'outset 1px #ECE9D8',                    //border_top
+                               'solid 1px #ECE9D8',                    //border_right
+                               'solid 1px #ECE9D8',                    //border_bottom
+                               '#ECE9D8'                                //background-color
+                              );
+
+var monthBarStyle=yearBarStyle;
+var calTypeBarStyle=yearBarStyle;
+var timeZoneBarStyle=yearBarStyle;
+
+var dayBarStyle=new css(
+                               'outset 0px #A2AEB1',                    //border_left
+                               'outset 0px #A2AEB1',                    //border_top
+                               'outset 1px #A2AEB1',                    //border_right
+                               'outset 0px #ffffff',                    //border_bottom
+                               '#ECE9D8'                                //background-color
+                              );
+
+var infoBarStyle=new css(
+                               'outset 1px #000000',                    //border_left
+                               'outset 1px #ffffff',                    //border_top
+                               'outset 1px #000000',                    //border_right
+                               'outset 1px #000000',                    //border_bottom
+                               '#ECE9D8'                                //background-color
+                              );
+
+
+</script>
+
+<script>
+//全局变量
+
+var gTime=new Date();  //global time
+var gYear=gTime.getYear();
+var gMonth=gTime.getMonth()+1;
+var gDate=gTime.getDate();
+var gHour=gTime.getHours();
+var gMinute=gTime.getMinutes();
+var gSecond=gTime.getSeconds();
+var gCalType=1;
+var gZone=-gTime.getTimezoneOffset()/60;
+var gZone0=gZone;
+
+var pressedCal=new CCC(gYear,gMonth,gDate,gHour+':'+gMinute+':'+gSecond,gZone,gCalType);
+
+var pressedGridID;
+var overedGridID;
+function calendarGrid(){
+  this.gridIndex;
+  this.year;
+  this.month;
+  this.date;
+  this.calType;
+  this.lunarDate;
+}
+
+//日历格子对象
+var calGrid=new Array();
+for(i=0;i<42;i++){
+  calGrid[i]=new calendarGrid();
+}
+
+
+//建造工具栏
+function buildToolBar(gridWidth,gridHeight,year,month,date,calType){
+  var fontStyle;
+  var fontStyle='color:#000000;font-size:9pt;';
+
+  var toolBarHTML='<table width='+((gridWidth+2)*7+2)+' height=30 cellpadding=0 cellspacing=0 style="border:solid 1px #000000;border-bottom:0px;"><tr>';
+
+  var overArrowAction='this.style.backgroundColor="#C1D2EE";this.style.borderColor="#316AC5";';
+  var outArrowAction='this.style.backgroundColor="#ECE9D8";this.style.borderColor="#ECE9D8";';
+  var overTextBarAction=overArrowAction;
+  var outTextBarAction=outArrowAction;
+
+  var changeYearOptionAction='this.blur();updateCalTable('+gridWidth+','+gridHeight+',this.value'+','+month+',calGrid[parseInt(pressedGridID.id.substring(7,10))].date,'+calType+');';
+  var changeMonthOptionAction='this.blur();updateCalTable('+gridWidth+','+gridHeight+','+year+',parseInt(this.value),calGrid[parseInt(pressedGridID.id.substring(7,10))].date,'+calType+');';
+  var changecalTypeOptionAction='this.blur();changecalType(this.value,'+gridWidth+','+gridHeight+','+year+','+month+',calGrid[parseInt(pressedGridID.id.substring(7,10))].date,'+calType+');';
+  var changetimeZoneOptionAction='this.blur();if(this.value==13){setTimeNow(true);}else{gZone=this.value;gTime.setTime(gTime.getTime()+(gZone-gZone0)*60*60*1000);gZone0=gZone;updateCalTable('+gridWidth+','+gridHeight+','+year+','+month+',calGrid[parseInt(pressedGridID.id.substring(7,10))].date,'+calType+');};';
+
+  ////////////////////////  选择年份  //////////////////////////////////////////////
+  toolBarHTML+='<td onclick="lastYearAction('+gridWidth+','+gridHeight+','+year+','+month+',calGrid[parseInt(pressedGridID.id.substring(7,10))].date,'+calType+')" style="'
+     +backArrowStyle.style
+     +'" '
+     +' title=上一年 '
+     +' onmouseover='+overArrowAction
+     +' onmouseout='+outArrowAction+'>'
+     +'<center style="'+fontStyle+';font-family:Webdings;">'
+     +'3'
+     +'</center>'
+     +'</td>';
+
+  toolBarHTML+='<td id=yearTextBar width=60 style="display:;'
+     +yearBarStyle.style
+     +'" '
+     +' onmouseover='+overTextBarAction
+     +' onmouseout='+outTextBarAction+'>'
+     +'<center style="'+fontStyle
+     +'" onclick=yearTextBar.style.display="none";yearOptionBar.style.display="";yearSelect.value='+year+';yearSelect.select();'
+     +' title='+pressedCal.chineseEra()
+     +'>'
+     +yearStr(year)+'年'
+     +'</center>'
+     +'</td>';
+
+  var yearOptionHTML='<input type=text size=6 id=yearSelect'
+     +' onblur=yearOptionBar.style.display="none";yearTextBar.style.display="";'
+     +' onchange='+changeYearOptionAction
+     +'>';
+
+
+  toolBarHTML+='<td id=yearOptionBar width=60 style="display:none;'
+     +yearBarStyle.style
+     +'">'
+     +'<center style="'+fontStyle
+     +'">'
+     +yearOptionHTML
+     +'</center>'
+     +'</td>';
+
+  toolBarHTML+='<td onclick="nextYearAction('+gridWidth+','+gridHeight+','+year+','+month+',calGrid[parseInt(pressedGridID.id.substring(7,10))].date,'+calType+')" style="'
+     +forwardArrowStyle.style
+     +'" '
+     +' title=下一年 '
+     +' onmouseover='+overArrowAction
+     +' onmouseout='+outArrowAction+'>'
+     +'<center style="'+fontStyle+';font-family:Webdings;">'
+     +'4'
+     +'</center>'
+     +'</td>';
+  //////////////////////////////////////////////////////////////////////////////////
+
+  ///////////////////////////  选择历种  //////////////////////////////////////////
+
+  toolBarHTML+='<td id=calTypeTextBar width=60 style="display:;'
+     +calTypeBarStyle.style
+     +'" '
+     +' onmouseover='+overTextBarAction+';refreshPressedCal();calTypeTextBarFont.title="儒略日："+pressedCal.JulianDay();'
+     +' onmouseout='+outTextBarAction+'>'
+     +'<center id=calTypeTextBarFont style="'+fontStyle
+     +';"'
+     +' onclick=calTypeTextBar.style.display="none";calTypeOptionBar.style.display="";'
+     +' title='+'儒略日：'+pressedCal.JulianDay()
+     +'>['
+     +calTypeStr(calType)
+     +']</center>'
+     +'</td>';
+
+  var calTypeOptionHTML='<select id=calTypeSelect'
+     +' onblur=calTypeOptionBar.style.display="none";calTypeTextBar.style.display="";'
+     +' onchange='+changecalTypeOptionAction
+     +'>';
+  calTypeOptionHTML+='<option value=0>选择</option>';
+  for(var k=1;k<=3;k++){
+    calTypeOptionHTML+='<option value='+k+'>';
+    calTypeOptionHTML+=calTypeStr(k);
+    calTypeOptionHTML+='</option>';
+  }
+
+  calTypeOptionHTML+='</select>';
+
+  toolBarHTML+='<td id=calTypeOptionBar width=60 style="display:none;'
+     +calTypeBarStyle.style
+     +'">'
+     +'<center style="'+fontStyle
+     +'">'
+     +calTypeOptionHTML
+     +'</center>'
+     +'</td>';
+
+  //////////////////////////////////////////////////////////////////////////////////
+
+  ////////////////////////////    选择时间    //////////////////////////////////////
+
+  toolBarHTML+='<td onclick="lastHourAction('+gridWidth+','+gridHeight+','+year+','+month+',calGrid[parseInt(pressedGridID.id.substring(7,10))].date,'+calType+')" style="'
+     +backArrowStyle.style
+     +'" '
+     +' title=前一小时 '
+     +' onmouseover='+overArrowAction
+     +' onmouseout='+outArrowAction+'>'
+     +'<center style="'+fontStyle+';font-family:Webdings;">'
+     +'3'
+     +'</center>'
+     +'</td>';
+
+  toolBarHTML+='<td style="'
+     +monthBarStyle.style
+     +'" '
+     +' onmouseover='+overTextBarAction
+     +' onmouseout='+outTextBarAction+'>'
+     +'<center id=timeTextBar style="'+fontStyle
+     +'" '
+     +' onclick=timeTextBar.style.display="none";timeZoneOptionBar.style.display="";'
+     +' title= '
+     +' onclick=setTimeNow(true);'
+     +'>'
+     +((gHour>=10)?gHour:'0'+gHour)+':'+((gMinute>=10)?gMinute:'0'+gMinute)+':'+((gSecond>=10)?gSecond:'0'+gSecond)
+     +'</center>'
+     +'</td>';  
+
+  var timeZoneOptionHTML='<select id=timeZoneSelect'
+     +' style="position:relative;z-index:10;width:260;"'
+     +' onblur=timeZoneOptionBar.style.display="none";timeTextBar.style.display="";'
+     +' onchange='+changetimeZoneOptionAction
+     +'>';
+  timeZoneOptionHTML+='<option value=-13>选择时区</option>';
+  for(var k=-12;k<=12;k++){
+    timeZoneOptionHTML+='<option value='+k+'>';
+    timeZoneOptionHTML+=timeZoneName(k);
+    timeZoneOptionHTML+='</option>';
+  }
+  timeZoneOptionHTML+='<option value=13>恢复当前时间</option>';
+
+  timeZoneOptionHTML+='</select>';
+
+  toolBarHTML+='<td id=timeZoneOptionBar width=60 style="display:none;'
+     +timeZoneBarStyle.style
+     +'">'
+     +'<center style="'+fontStyle
+     +'">'
+     +timeZoneOptionHTML
+     +'</center>'
+     +'</td>';
+
+
+
+  toolBarHTML+='<td onclick="nextHourAction('+gridWidth+','+gridHeight+','+year+','+month+',calGrid[parseInt(pressedGridID.id.substring(7,10))].date,'+calType+')" style="'
+     +forwardArrowStyle.style
+     +'" '
+     +' title=后一小时 '
+     +' onmouseover='+overArrowAction
+     +' onmouseout='+outArrowAction+'>'
+     +'<center style="'+fontStyle+';font-family:Webdings;">'
+     +'4'
+     +'</center>'
+     +'</td>';
+
+  //////////////////////////////////////////////////////////////////////////////////
+
+
+
+  ////////////////////////  选择月份  //////////////////////////////////////////////
+  toolBarHTML+='<td onclick="lastMonthAction('+gridWidth+','+gridHeight+','+year+','+month+',calGrid[parseInt(pressedGridID.id.substring(7,10))].date,'+calType+')" style="'
+     +backArrowStyle.style
+     +'" '
+     +' title=上个月 '
+     +' onmouseover='+overArrowAction
+     +' onmouseout='+outArrowAction+'>'
+     +'<center style="'+fontStyle+';font-family:Webdings;">'
+     +'3'
+     +'</center>'
+     +'</td>';
+
+  toolBarHTML+='<td id=monthTextBar width=60 style="display:;'
+     +monthBarStyle.style
+     +'" '
+     +' onmouseover='+overTextBarAction
+     +' onmouseout='+outTextBarAction+'>'
+     +'<center style="'+fontStyle
+     +'" onclick=monthTextBar.style.display="none";monthOptionBar.style.display="";'
+     +'>'
+     +month+'月'
+     +'</center>'
+     +'</td>';
+
+  var monthOptionHTML='<select id=monthSelect'
+     +' onblur=monthOptionBar.style.display="none";monthTextBar.style.display="";'
+     +' onchange='+changeMonthOptionAction
+     +'>';
+  monthOptionHTML+='<option value=0>选择</option>';
+  for(var k=1;k<=12;k++){
+    monthOptionHTML+='<option value='+k+'>';
+    monthOptionHTML+=k+'月';
+    monthOptionHTML+='</option>';
+  }
+
+  monthOptionHTML+='</select>'
+
+  toolBarHTML+='<td id=monthOptionBar width=60 style="display:none;'
+     +monthBarStyle.style
+     +'">'
+     +'<center style="'+fontStyle
+     +'">'
+     +monthOptionHTML
+     +'</center>'
+     +'</td>';
+
+  toolBarHTML+='<td onclick="nextMonthAction('+gridWidth+','+gridHeight+','+year+','+month+',calGrid[parseInt(pressedGridID.id.substring(7,10))].date,'+calType+')" style="'
+     +forwardArrowStyle.style
+     +'" '
+     +' title=下个月 '
+     +' onmouseover='+overArrowAction
+     +' onmouseout='+outArrowAction+'>'
+     +'<center style="'+fontStyle+';font-family:Webdings;">'
+     +'4'
+     +'</center>'
+     +'</td>';
+
+  //////////////////////////////////////////////////////////////////////////////////
+
+
+  toolBarHTML+='</tr></table>';
+
+  return toolBarHTML;
+}
+
+</script>
+<script>
+//建造星期栏
+function buildDayBar(gridWidth,gridHeight,year,month,date,calType){
+  var i;
+  var fontStyle;
+  var value;
+  var width=gridWidth;
+  var height=gridHeight;
+
+  var dayBarHTML='<table width='+((gridWidth+2)*7+2)+' cellpadding=0 cellspacing=0 style="border:solid 1px #000000;border-top:solid 1px #A2AEB1;border-bottom:0px">';
+
+  dayBarHTML+='<tr>';
+  for(i=0;i<7;i++){
+
+    if(i==0||i==6){
+      fontStyle='color:#ff0000;font-size:9pt;';
+    }
+    else{
+      fontStyle='color:#000000;font-size:9pt;';
+    }
+
+    if(i==6){
+      dayBarStyle.style+=';border-right:0px;';
+    }
+    else{
+      dayBarStyle=new css(
+                               'outset 0px #A2AEB1',                    //border_left
+                               'outset 0px #A2AEB1',                    //border_top
+                               'outset 1px #A2AEB1',                    //border_right
+                               'outset 0px #ffffff',                    //border_bottom
+                               '#ECE9D8'                                //background-color
+                              );
+    }
+
+    value=dayStr(i);
+
+    dayBarHTML+='<td style="'
+       +dayBarStyle.style
+       +'" width='+width
+       +'" height='+height
+       +'">'
+       +'<center style="'+fontStyle+'">'
+       +value
+       +'</center>'
+       +'</td>';
+
+  }
+  dayBarHTML+='</tr>';
+
+  dayBarHTML+='</table>';
+
+  return dayBarHTML;
+}
+
+</script>
+<script>
+
+//建造日期格子
+function buildDateGrid(gridWidth,gridHeight,year,month,date,calType){
+  var i,j;
+  var id;
+  var value;
+  var width=gridWidth;
+  var height=gridHeight;
+  var gridStyle=releasedGridStyle.style;
+  var onClickAction='clickGrid(this)';
+  var onOverAction='overGrid(this)';
+  var fontStyle;
+  var lunarTxtStyle;
+  var disabledHTML='';
+
+  var firstDateDay=Day(year,month,1,calType);  //本月1日的星期
+  var lastMonthLength;
+  if(month==1){
+    lastMonthLength=D0(year-1,12,31,calType)-D0(year-1,12,0,calType);
+  }
+  else{
+    lastMonthLength=D0(year,month,1,calType)-D0(year,month-1,1,calType);
+  }
+
+  var currentMonthLength=D0(year,month+1,1,calType)-D0(year,month,1,calType);
+  var grid0DateNum=lastMonthLength-firstDateDay+1;
+  var gridDateNum=new Array();
+  gridDateNum[0]=grid0DateNum;
+  var todayGridID;
+
+  var whichMonth=new Array();
+  whichMonth[0]=(gridDateNum[0]!=1)?'last':'current';
+
+  var gridMonthNum=new Array();
+
+  var gridYearNum=new Array();
+
+  for(i=0;i<42;i++){
+      if(i>0){
+        gridDateNum[i]=gridDateNum[i-1]+1;
+        whichMonth[i]=whichMonth[i-1];
+      }
+
+      if(whichMonth[i]=='last'&&gridDateNum[i]>lastMonthLength){
+        gridDateNum[i]-=lastMonthLength;
+        whichMonth[i]='current';
+      }
+
+      if(whichMonth[i]=='current'&&gridDateNum[i]>currentMonthLength){
+        gridDateNum[i]-=currentMonthLength;
+        whichMonth[i]='next';
+      }
+
+      gridMonthNum[i]=month;
+
+      if(whichMonth[i]=='last'){
+        gridMonthNum[i]--;
+      }
+
+      if(whichMonth[i]=='next'){
+        gridMonthNum[i]++;
+      }
+
+      gridYearNum[i]=year;
+      if(gridMonthNum[i]>12){
+        gridYearNum[i]++;
+        gridMonthNum[i]-=12;
+      }
+
+      if(gridMonthNum[i]<1){
+        gridYearNum[i]--;
+        gridMonthNum[i]+=12;
+      }
+  }
+
+
+  var grid0Lunar=new lunarCal(gridYearNum[0],gridMonthNum[0],gridDateNum[0],calType);
+  var grid0LunarDate=grid0Lunar.date;
+  var grid0LunarMonth=grid0Lunar.month;
+
+  var lunD=new Array();
+  lunD[0]=grid0Lunar.date;
+
+  var lunMon=new Array();
+  lunMon[0]=grid0Lunar.month;
+
+  var lunar2ndHead=30-lunD[0];
+
+  var grid2ndLunar=new lunarCal(gridYearNum[lunar2ndHead],gridMonthNum[lunar2ndHead],gridDateNum[lunar2ndHead],calType);
+  var grid2ndLunarDate=grid2ndLunar.date;
+  var grid2ndLunarMonth=grid2ndLunar.month;
+  lunD[lunar2ndHead]=grid2ndLunar.date;
+  lunMon[lunar2ndHead]=grid2ndLunar.month;
+
+  var lunar1stTail;
+
+  if(lunD[lunar2ndHead]==30){
+    lunar1stTail=lunar2ndHead;
+  }
+  else{
+    lunar1stTail=lunar2ndHead-1;
+  }
+
+  lunar2ndHead=lunar1stTail+1;
+
+  for(i=1;i<=lunar1stTail;i++){
+    lunD[i]=lunD[i-1]+1;
+    lunMon[i]=lunMon[i-1]; 
+  }
+
+  lunD[lunar2ndHead]=1;
+
+  if(lunMon[lunar1stTail]>0){
+    lunMon[lunar2ndHead]=((lunMon[lunar1stTail]+1)-1)%12+1; 
+  }
+  else{
+    lunMon[lunar2ndHead]=((-lunMon[lunar1stTail]+1)-1)%12+1; 
+  }
+
+
+  var grid41Lunar=new lunarCal(gridYearNum[41],gridMonthNum[41],gridDateNum[41],calType);
+  var grid41LunarDate=grid41Lunar.date;
+  var grid41LunarMonth=grid41Lunar.month;
+  lunD[41]=grid41Lunar.date;
+  lunMon[41]=grid41Lunar.month;
+
+  //////特别处理1582年9月///////////////
+
+  if(year==1582&&month==9&&calType==1){
+    lunD[41]=20;;
+    lunMon[41]=9;   
+
+    gridDateNum[40]=15;
+    gridDateNum[41]=16;
+  }
+
+  ///////////////////////////////////////
+
+  for(i=40;i>=lunar2ndHead;i--){
+    if(lunD[i+1]==1){
+      for(j=lunar2ndHead+1;j<i+1;j++){
+        lunD[j]=lunD[j-1]+1;
+        lunMon[j]=lunMon[j-1]; 
+      }
+
+      break;
+    }
+    lunD[i]=lunD[i+1]-1;
+    lunMon[i]=lunMon[i+1];
+  }
+
+
+  //////特别处理1582年10月///////////////
+
+  if(year==1582&&month==10&&calType==1){
+    lunD[25]=29;
+    lunMon[25]=9;
+    for(i=24;i>=15;i--){
+      lunD[i]=lunD[i+1]-1;
+      lunMon[i]=lunMon[i+1];
+    }
+    for(i=42;i<149;i++){
+      lunD[i]=lunD[i-1]+1;
+      lunMon[i]=lunMon[i-1];
+      whichMonth[i]=whichMonth[i-1];
+      gridDateNum[i]=gridDateNum[i-1]+1;
+      calGrid[i]=calGrid[i-1]+1;
+    }
+  }
+
+  ///////////////////////////////////////
+
+  var ifChuyiAndJq=0;  //是否有初一与节气相重合的一天
+
+  var dateGridHTML='<table cellpadding=0 cellspacing=0 style="border:solid 1px #000000;border-top:0px;border-bottom:0px;">';
+
+  var iMax=(year==1582&&month==10&&calType==1)?8:6;
+
+  for(i=0;i<iMax;i++){
+
+    if(!(year==1582&&month==10&&calType==1&&i!=0)){
+      dateGridHTML+='<tr>';
+    }
+
+    for(j=0;j<7;j++){
+
+
+      if(whichMonth[7*i+j]=='last'||whichMonth[7*i+j]=='next'){
+        disabledHTML=' disabled ';
+      }
+      else{
+        disabledHTML='';
+      }
+      if(date==gridDateNum[7*i+j]){
+        todayGridID=id;
+      }
+
+
+      if((7*i+j)%7==0||(7*i+j)%7==6){
+        fontStyle='color:#ff0000;font-size:9pt;';
+      }
+      else{
+        fontStyle='color:#000000;font-size:9pt;';
+      }
+
+      lunarTxtStyle='color:#000000;font-size:8pt;';
+
+
+      lunarTxt=lunDStr(lunD[7*i+j]);
+      if(lunarTxt=='初一'){
+        lunarTxt=lunMStr(lunMon[7*i+j])+'月';
+      }
+
+      var newSTerm=pressedCal.solarTerm();
+
+      var s1=newSTerm.sTermInMonth[0];
+      var s2=newSTerm.sTermInMonth[1];
+      if(parseInt(s1.substring(s1.indexOf('月')+1,s1.indexOf('日')))==gridDateNum[7*i+j]){
+          if(lunarTxt.indexOf('月')!=-1){
+            ifChuyiAndJq=1;
+          }
+          lunarTxt=s1.substring(0,2);
+      }
+      if(parseInt(s2.substring(s2.indexOf('月')+1,s2.indexOf('日')))==gridDateNum[7*i+j]){
+          if(lunarTxt.indexOf('月')!=-1){
+            ifChuyiAndJq=1;
+          }
+          lunarTxt=s2.substring(0,2);
+      }
+
+      if(ifChuyiAndJq==1&&lunarTxt=='初二'){
+        lunarTxt=lunMStr(lunMon[7*i+j])+'月';
+        ifChuyiAndJq=0;
+      }
+
+
+      id='calGrid'+(7*i+j);
+      value=gridDateNum[7*i+j]+'<br>'+'<span style="'+lunarTxtStyle+'">'+lunarTxt+'</span>';
+
+
+      //////特别处理1582年10月///////////////
+
+      if(year==1582&&month==10&&calType==1&&((7*i+j)>=5&&(7*i+j)<15)){
+        continue;
+      }
+      else if(year==1582&&month==10&&calType==1&&((7*i+j)==17||(7*i+j)==24||(7*i+j)==31||(7*i+j)==38)){
+        dateGridHTML+='</tr><tr>';
+      }
+      else if(year==1582&&month==10&&calType==1&&((7*i+j)==45)){
+        dateGridHTML+='</tr>';
+        break;
+      }
+
+      ///////////////////////////////////////
+
+      dateGridHTML+='<td id="'+id
+        +'" width='+width
+        +'" height='+height
+        +disabledHTML
+        +' style="'+gridStyle
+        +'" onclick="'+onClickAction
+        +'" onmouseover='+onOverAction
+
+        +' title= '
+
+        +'>'
+        +'<center style="'+fontStyle+'">'
+        +value
+        +'</center>'
+        +'</td>';
+
+     calGrid[(7*i+j)].gridIndex=(7*i+j);
+     calGrid[(7*i+j)].date=gridDateNum[7*i+j];
+     calGrid[(7*i+j)].year=year;
+     calGrid[(7*i+j)].month=month;
+     calGrid[(7*i+j)].calType=calType;
+
+    }
+
+    if(!(year==1582&&month==10&&calType==1&&i!=7)){
+      dateGridHTML+='</tr>';
+    }
+  }
+
+  dateGridHTML+='</table>';
+
+  return dateGridHTML;
+}
+
+
+</script>
+
+<script>
+//建造其他信息栏
+function buildInfoBar(gridWidth,gridHeight,year,month,date,calType){
+  var i;
+  var fontStyle='color:#000000;font-size:9pt;';
+  var width=(gridWidth+2)*7+2;
+
+
+  var infoBarHTML='<table cellpadding=0 cellspacing=0 width='+width+'>';
+
+  infoBarHTML+='<tr>';
+
+  var newSTerm=pressedCal.solarTerm();
+
+  //显示节气时刻
+  infoBarHTML+='<td style="'
+             +infoBarStyle.style
+              +'">'
+              +'<center id=sTermBar style="'+fontStyle+'">'
+
+              +newSTerm.sTermInMonth[0]+'　'
+              +'<span id=solarZodiacBar>'+pressedCal.solarZodiac_Str+'</span>'+'　'
+              +newSTerm.sTermInMonth[1]
+
+              +'</center>'
+              +'</td>';
+
+  infoBarHTML+='</tr>';
+
+  infoBarHTML+='</table>';
+
+  return infoBarHTML;
+}
+
+</script>
+
+<script>
+
+function buildCalTable(gridWidth,gridHeight,year,month,date,calType){
+
+  document.write('<div id=calTable style="cursor:default;" onmouseout=outCalTableAction()>作者：neweroica</div>');
+
+  updateCalTable(gridWidth,gridHeight,year,month,date,calType);
+
+  setTimeNow(false);
+
+}
+
+function updateCalTable(gridWidth,gridHeight,year,month,date,calType){
+
+  ////////////  检查年份范围  ////////////////////////
+  if(isNaN(year)||year<-849||year>2100){
+    alert("年份必须在-849（公元前850年）到2100之间");
+    return -1;
+  }
+  //////////////////////////////////////////////////////
+
+  gYear=year;
+  gMonth=month;
+  gDate=date;
+  gCalType=calType;
+  refreshPressedCal();
+
+  toolBarHTML=buildToolBar(gridWidth,gridHeight,year,month,date,calType);
+
+  dayBarHTML=buildDayBar(gridWidth,gridHeight*0.5,year,month,date,calType);
+
+  dateGridHTML=buildDateGrid(gridWidth,gridHeight,year,month,date,calType);
+
+  infoBarHTML=buildInfoBar(gridWidth,gridHeight,year,month,date,calType);
+
+  calTable.innerHTML=(toolBarHTML+dayBarHTML+dateGridHTML+infoBarHTML);
+  todayGridID='calGrid'+(date-1+Day(year,month,1,calType));
+  pressedGridID=document.all[todayGridID];
+  overedGridID=document.all[todayGridID];
+  clickGrid(document.all[todayGridID]);
+
+}
+
+////////////////////////////////////////////////////////////////////////
+function releasedGridAction(obj){
+  obj.style.borderLeft=releasedGridStyle.borderLeft;
+  obj.style.borderTop=releasedGridStyle.borderTop;
+  obj.style.borderRight=releasedGridStyle.borderRight;
+  obj.style.borderBottom=releasedGridStyle.borderBottom;
+  obj.style.backgroundColor=releasedGridStyle.backgroundColor;
+}
+
+function pressedGridAction(obj){
+  obj.style.borderLeft=pressedGridStyle.borderLeft;
+  obj.style.borderTop=pressedGridStyle.borderTop;
+  obj.style.borderRight=pressedGridStyle.borderRight;
+  obj.style.borderBottom=pressedGridStyle.borderBottom;
+  obj.style.backgroundColor=pressedGridStyle.backgroundColor;
+}
+
+
+function clickGrid(obj){
+  releasedGridAction(pressedGridID);
+  pressedGridAction(obj);
+  pressedGridID=obj;
+
+  var gridNo=obj.id.substring(7,10);
+
+  gYear=calGrid[gridNo].year;
+  gMonth=calGrid[gridNo].month;
+  gDate=calGrid[gridNo].date;
+  gCalType=calGrid[gridNo].calType;
+
+  refreshPressedCal();
+
+  //显示相关日历信息
+
+  timeTextBar.title=timeZoneName(parseInt(gZone0))+'\n'
+                   +'['+pressedCal.yGz_Str()+'年　'+pressedCal.mGz_Str()+'月　'+pressedCal.dGz_Str()+'日　'+pressedCal.hGz_Str()+'时'+']'+'\n'
+                   +'['+GZNY(pressedCal.yGz())+'　'+GZNY(pressedCal.mGz())+'　'+GZNY(pressedCal.dGz())+'　'+GZNY(pressedCal.hGz())+']'+'\n'
+                   +'二十八宿：'+pressedCal.stars28_Str();
+
+  solarZodiacBar.innerHTML=pressedCal.solarZodiac_Str();
+
+  var pressedCalLunar=pressedCal.lunar();
+  window.status=pressedCal.year()+'-'+pressedCal.month()+'-'+pressedCal.date()+'　'
+            +pressedCal.chineseZodiacName()+'年　'
+            +pressedCalLunar.lunarMonth_Str+'月'+pressedCalLunar.lunarDate_Str+'　'
+            +pressedCalLunar.syzygyTime_Str+pressedCalLunar.syzygyName
+            +pressedCalLunar.ecliType_Str
+            +((pressedCal.sFtvl()!='')?'\n'+pressedCal.sFtvl():'')
+            +((pressedCalLunar.lunFtvl()!='')?'\n'+pressedCalLunar.lunFtvl():'')
+            +((pressedCal.jqFtvl()!='')?'\n'+pressedCal.jqFtvl():'')+'　'
+            +'['+pressedCal.yGz_Str()+'年　'+pressedCal.mGz_Str()+'月　'+pressedCal.dGz_Str()+'日　'+pressedCal.hGz_Str()+'时'+']'
+            +'　—'+pressedCal.chineseEra()
+            ;
+}
+
+////////////////////////////////////////////////////////////////////////
+function outGridAction(obj){
+  obj.style.borderLeft=outGridStyle.borderLeft;
+  obj.style.borderTop=outGridStyle.borderTop;
+  obj.style.borderRight=outGridStyle.borderRight;
+  obj.style.borderBottom=outGridStyle.borderBottom;
+  obj.style.backgroundColor=outGridStyle.backgroundColor;
+}
+
+function overGridAction(obj){
+  obj.style.borderLeft=overGridStyle.borderLeft;
+  obj.style.borderTop=overGridStyle.borderTop;
+  obj.style.borderRight=overGridStyle.borderRight;
+  obj.style.borderBottom=overGridStyle.borderBottom;
+  obj.style.backgroundColor=overGridStyle.backgroundColor;
+
+  //其他日历信息//
+  var gridNo=obj.id.substring(7,10);
+  var calInfo=new CCC(calGrid[gridNo].year,calGrid[gridNo].month,calGrid[gridNo].date,gHour+':'+gMinute+':'+gSecond,gZone,calGrid[gridNo].calType);
+  var calInfoLunar=calInfo.lunar();
+  obj.title=calInfo.year()+'-'+calInfo.month()+'-'+calInfo.date()+'　'
+            +calInfo.chineseZodiacName()+'年　'
+            +calInfoLunar.lunarMonth_Str+'月'+calInfoLunar.lunarDate_Str+'　'
+            +calInfoLunar.syzygyTime_Str+calInfoLunar.syzygyName
+            +calInfoLunar.ecliType_Str
+            +((calInfo.sFtvl()!='')?'\n'+calInfo.sFtvl():'')
+            +((calInfoLunar.lunFtvl()!='')?'\n'+calInfoLunar.lunFtvl():'')
+            +((calInfo.jqFtvl()!='')?'\n'+calInfo.jqFtvl():'');
+  ///////////////
+}
+
+
+function overGrid(obj){
+  outGridAction(overedGridID);
+  overGridAction(obj);
+
+  pressedGridAction(pressedGridID);
+
+  overedGridID=obj;
+}
+
+
+function outCalTableAction(){
+  outGridAction(overedGridID);
+  pressedGridAction(pressedGridID);
+}
+</script>
+
+<script>
+function lastYearAction(gridWidth,gridHeight,year,month,pressedDate,calType){
+  year--;
+
+  updateCalTable(gridWidth,gridHeight,year,month,pressedDate,calType);
+
+}
+
+function nextYearAction(gridWidth,gridHeight,year,month,pressedDate,calType){
+  year++;
+
+  updateCalTable(gridWidth,gridHeight,year,month,pressedDate,calType);
+
+}
+
+function lastMonthAction(gridWidth,gridHeight,year,month,pressedDate,calType){
+  month--;
+  if(month<1){
+    month+=12;
+    year--;
+  }
+
+  updateCalTable(gridWidth,gridHeight,year,month,pressedDate,calType);
+
+}
+
+function nextMonthAction(gridWidth,gridHeight,year,month,pressedDate,calType){
+  month++;
+  if(month>12){
+    month-=12;
+    year++;
+  }
+
+  updateCalTable(gridWidth,gridHeight,year,month,pressedDate,calType);
+
+}
+
+function lastHourAction(gridWidth,gridHeight,year,month,pressedDate,calType){
+  var newtime=gTime.getTime();
+  gTime.setTime(newtime-60*60*1000);
+  gYear=gTime.getYear();
+  gMonth=gTime.getMonth()+1;
+  gDate=gTime.getDate();
+  gHour=gTime.getHours();
+  gMinute=gTime.getMinutes();
+  gSecond=gTime.getSeconds();
+
+  clickGrid(pressedGridID);
+
+  timeTextBar.innerHTML=((gHour>=10)?gHour:'0'+gHour)+':'+((gMinute>=10)?gMinute:'0'+gMinute)+':'+((gSecond>=10)?gSecond:'0'+gSecond);
+}
+
+function nextHourAction(gridWidth,gridHeight,year,month,pressedDate,calType){
+  var newtime=gTime.getTime();
+  gTime.setTime(newtime+60*60*1000);
+  gYear=gTime.getYear();
+  gMonth=gTime.getMonth()+1;
+  gDate=gTime.getDate();
+  gHour=gTime.getHours();
+  gMinute=gTime.getMinutes();
+  gSecond=gTime.getSeconds();
+
+  clickGrid(pressedGridID);
+
+  timeTextBar.innerHTML=((gHour>=10)?gHour:'0'+gHour)+':'+((gMinute>=10)?gMinute:'0'+gMinute)+':'+((gSecond>=10)?gSecond:'0'+gSecond);
+}
+
+function changecalType(calType2,gridWidth,gridHeight,year,month,pressedDate,calType){
+  var cal;
+  if(calType==1&&calType2==2){
+    cal=No2Gr(year,month,pressedDate);
+    calType=2;
+  }
+  if(calType==1&&calType2==3){
+    cal=No2Ju(year,month,pressedDate);
+    calType=3;
+  }
+  if(calType==2&&calType2==1){
+    cal=Gr2No(year,month,pressedDate);
+    calType=1;
+  }
+  if(calType==2&&calType2==3){
+    cal=Gr2Ju(year,month,pressedDate);
+    calType=3;
+  }
+  if(calType==3&&calType2==1){
+    cal=Ju2No(year,month,pressedDate);
+    calType=1;
+  }
+  if(calType==3&&calType2==2){
+    cal=Ju2Gr(year,month,pressedDate);
+    calType=2;
+  }
+
+  year=floor(cal/10000);
+  month=floor((cal-year*10000)/100);
+  pressedDate=cal%100;
+
+  updateCalTable(gridWidth,gridHeight,year,month,pressedDate,calType);
+}
+
+function setTimeNow(ifReset){
+  if(ifReset){
+    clearTimeout(timer);
+    gTime=new Date();
+    gYear=gTime.getYear();
+    gMonth=gTime.getMonth()+1;
+    gDate=gTime.getDate();
+    gZone0=gZone=-gTime.getTimezoneOffset()/60;
+    updateCalTable(70,70,gYear,gMonth,gDate,1);
+
+    timer=setTimeout('setTimeNow(false)',500);
+    return 0;
+  }
+  var newtime=gTime.getTime();
+  gTime.setTime(newtime+500);
+  gYear=gTime.getYear();
+  gMonth=gTime.getMonth()+1;
+  gDate=gTime.getDate();
+  gHour=gTime.getHours();
+  gMinute=gTime.getMinutes();
+  gSecond=gTime.getSeconds();
+
+  timeTextBar.innerHTML=((gHour>=10)?gHour:'0'+gHour)+':'+((gMinute>=10)?gMinute:'0'+gMinute)+':'+((gSecond>=10)?gSecond:'0'+gSecond);
+
+
+  timer=setTimeout('setTimeNow(false)',500);
+}
+
+function refreshPressedCal(){
+  pressedCal=new CCC(gYear,gMonth,gDate,gHour+':'+gMinute+':'+gSecond,gZone,gCalType);
+}
+
+</script>
+
+
+<center>
+<script>
+
+buildCalTable(70,70,gYear,gMonth,gDate,1);
+
+</script>
+<br>版权所有：(C) 2002-2003 <a href="mailto:wy25@mail.bnu.edu.cn" title=QQ:32460746>neweroica </a>
+</center>
+</html>
